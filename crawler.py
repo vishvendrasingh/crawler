@@ -47,6 +47,8 @@ def geturl(soup):
   urldict = {}
   for link in  soup.findAll("a"):
     url_mended=urlparse.urljoin(url_callable, link.get("href"))
+    if url_mended.endswith('/'):
+      url_mended = url_mended[:-1]
     urldict[link.text]=url_mended
   return urldict
 
@@ -61,8 +63,10 @@ url_clean=urlparse.urlparse(url).netloc
 url_callable=urlparse.urlparse(url).scheme+'://'+urlparse.urlparse(url).netloc
 user_agent = {'User-agent': 'Mozilla/5.0'}
 
+##mongodb authentication
 ##conn = pymongo.MongoClient('mongodb://username:password@hostname')
 ##db=conn.database
+##mongodb authentication
 
 try: 
   collection=list(sys.argv)[2]
@@ -119,6 +123,7 @@ while True:
     if url_new_clean==url_clean:##Keeps in the current domain only
         if url_new not in processedlist:
             print str(count)+' Fetching...'+url_new
+
             try:
                 r = requests.get(url_new, headers = user_agent)
                 html=r.text

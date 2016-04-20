@@ -47,8 +47,8 @@ def geturl(soup):
   urldict = {}
   for link in  soup.findAll("a"):
     url_mended=urlparse.urljoin(url_callable, link.get("href"))
-    if url_mended.endswith('/'):
-      url_mended = url_mended[:-1]
+    url_crap = urlparse.urldefrag(url_mended)
+    url_mended=url_crap[0]
     urldict[link.text]=url_mended
   return urldict
 
@@ -80,7 +80,6 @@ r = requests.get(url, headers = user_agent)
 html=r.text
 soup = BeautifulSoup(html,"lxml")
 
-
 all_url_dict=geturl(soup)
 all_url_list=list(all_url_dict.values())
 unprocessedlist=all_url_list
@@ -111,16 +110,23 @@ print ''''''
 print ''''''
 count=count+1
 
+speed_broker=1
 while True:
+    speed_broker+=1
+    if speed_broker>1000:
+      print 'you are dring at higher speed'
+      break
     if len(unprocessedlist) == 0:
         break
     url_new=unprocessedlist[0]
     url_new_clean=urlparse.urlparse(url_new).netloc
     
+    #print unprocessedlist
+    
     if url_new.endswith('/'):
       url_new = url_new[:-1]
-      
-    if url_new_clean==url_clean or url_new_clean=='www.'+url_clean:##Keeps in the current domain only
+    
+    if (url_new_clean==url_clean) or (url_new_clean=='www.'+url_clean):##Keeps in the current domain only
         if url_new not in processedlist:
             print str(count)+' Fetching...'+url_new
 
@@ -145,7 +151,10 @@ while True:
             all_url_list=list(all_url_dict.values())
             unprocessedlist = list(set(unprocessedlist + all_url_list))
             processedlist.append(url_new)
-            unprocessedlist.remove(url_new)
+            try: 
+              unprocessedlist.remove(url_new)
+            except:
+              unprocessedlist.remove(url_new+'/')
             end = time.time()
             time_taken=end - start
             print('Time Spent: '+str(time_taken))+' Sec'
@@ -154,8 +163,16 @@ while True:
             print ''''''
             count=count+1
         else:
-            unprocessedlist.remove(url_new)
+            try: 
+              unprocessedlist.remove(url_new)
+            except:
+              unprocessedlist.remove(url_new+'/')
+              print url_new+' is not present in this list thrown exception from inner if'
     else:
-        unprocessedlist.remove(url_new)
+        try:
+          unprocessedlist.remove(url_new)
+        except:
+          unprocessedlist.remove(url_new+'/')
+          print url_new+' is not present in this list thrown exception from outer if'
+          
     end = time.time()
-    

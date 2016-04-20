@@ -120,7 +120,7 @@ while True:
     if url_new.endswith('/'):
       url_new = url_new[:-1]
       
-    if url_new_clean==url_clean:##Keeps in the current domain only
+    if url_new_clean==url_clean or url_new_clean=='www.'+url_clean:##Keeps in the current domain only
         if url_new not in processedlist:
             print str(count)+' Fetching...'+url_new
 

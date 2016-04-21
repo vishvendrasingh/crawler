@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import requests
 import sys
 import lxml
@@ -80,6 +81,7 @@ r = requests.get(url, headers = user_agent)
 html=r.text
 soup = BeautifulSoup(html,"lxml")
 
+
 all_url_dict=geturl(soup)
 all_url_list=list(all_url_dict.values())
 unprocessedlist=all_url_list
@@ -110,19 +112,18 @@ print ''''''
 print ''''''
 count=count+1
 
-speed_broker=1
+count2=1
+avg_loop_speed=int()
+
 while True:
-    speed_broker+=1
-    if speed_broker>1000:
-      print 'you are dring at higher speed'
-      break
+    if avg_loop_speed>100:
+        print 'you are driving very fast!! Slow down buddy'
+        break
     if len(unprocessedlist) == 0:
         break
     url_new=unprocessedlist[0]
     url_new_clean=urlparse.urlparse(url_new).netloc
-    
-    #print unprocessedlist
-    
+
     if url_new.endswith('/'):
       url_new = url_new[:-1]
     
@@ -158,7 +159,8 @@ while True:
             end = time.time()
             time_taken=end - start
             print('Time Spent: '+str(time_taken))+' Sec'
-            print('Average-speed: '+str(count/time_taken)+'  Link/Sec')
+            print('Average-crawler-speed: '+str(count/time_taken)+'  Link/Sec')
+            print('Average-loop-speed: '+str(count2/time_taken)+'  Link/Sec')
             print ''''''
             print ''''''
             count=count+1
@@ -167,12 +169,13 @@ while True:
               unprocessedlist.remove(url_new)
             except:
               unprocessedlist.remove(url_new+'/')
-              print url_new+' is not present in this list thrown exception from inner if'
+              #print url_new+' is not present in this list thrown exception from inner if'
     else:
         try:
           unprocessedlist.remove(url_new)
         except:
           unprocessedlist.remove(url_new+'/')
-          print url_new+' is not present in this list thrown exception from outer if'
-          
+          #print url_new+' is not present in this list thrown exception from outer if'
     end = time.time()
+    avg_loop_speed=count2/time_taken
+    count2+=1

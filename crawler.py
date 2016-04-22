@@ -44,6 +44,10 @@ def getphone(html):
   ph_list = filter(None, ph_list)
   return {'phone':ph_list}
 
+def getemail(html):
+  email_match = re.findall(r'[\w\.-]+@[\w\.-]+', html)
+  return {'email':email_match}
+
 def geturl(soup):
   urldict = {}
   for link in  soup.findAll("a"):
@@ -87,7 +91,7 @@ all_url_list=list(all_url_dict.values())
 unprocessedlist=all_url_list
 
 try:
-    d=[{'url':url},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),{'all_url':all_url_dict}]
+    d=[{'url':url},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),getemail(html),{'all_url':all_url_dict}]
     data = {url_clean : d}
     data_dump = data
     db[collection].insert(data_dump,check_keys=False)
@@ -140,7 +144,7 @@ while True:
                 print "Oops!  request loop throw this error..."
                 
             try:
-                d=[{'url':url_new},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),{'all_url':all_url_dict}]
+                d=[{'url':url_new},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),getemail(html),{'all_url':all_url_dict}]
                 data = {url_new_clean : d}
                 data_dump = data
             except ValueError:

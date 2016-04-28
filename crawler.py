@@ -14,20 +14,20 @@ def getdescription(soup):
   desc = soup.findAll(attrs={"name":"description"})
   if len(desc):
     meta_desc=desc[0]['content'].encode('utf-8')
-    return {'meta_description':meta_desc}
+    return meta_desc
    
 def getkeywords(soup):
   meta_keyword=''
   meta_key = soup.findAll(attrs={"name":"keywords"})
   if len(meta_key):
     meta_keyword=meta_key[0]['content'].encode('utf-8')
-    return {'meta_keywords':meta_keyword}
+    return meta_keyword
     
 def gettitle(soup):
   title=''
   for title in soup.findAll('title'):
     title=title.text
-  return {'page_title':title}
+  return title
   
 def getbodytext(soup):
   body=''
@@ -35,18 +35,18 @@ def getbodytext(soup):
     elem.extract()
   for body in soup.findAll('body'):
     body=body.text
-  return {'body':" ".join(body.split())}
+  return " ".join(body.split())
 
 def getphone(html):
   ph_list=[]
   str_list=re.findall("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{5})", html)
   ph_list=str_list = filter(None, str_list)
   ph_list = filter(None, ph_list)
-  return {'phone':ph_list}
+  return ph_list
 
 def getemail(html):
   email_match = re.findall(r'[\w\.-]+@[\w\.-]+', html)
-  return {'email':email_match}
+  return email_match
 
 def geturl(soup):
   urldict = {}
@@ -68,10 +68,12 @@ url_clean=urlparse.urlparse(url).netloc
 url_callable=urlparse.urlparse(url).scheme+'://'+urlparse.urlparse(url).netloc
 user_agent = {'User-agent': 'Mozilla/5.0'}
 
-##mongodb authentication
-##conn = pymongo.MongoClient('mongodb://username:password@hostname')
-##db=conn.database
-##mongodb authentication
+###mongodb credentials put here
+
+#conn = pymongo.MongoClient('mongodb://username:password@hostname')
+#db=conn.database
+
+###mongodb credentials put here
 
 try: 
   collection=list(sys.argv)[2]
@@ -91,9 +93,7 @@ all_url_list=list(all_url_dict.values())
 unprocessedlist=all_url_list
 
 try:
-    d=[{'url':url},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),getemail(html),{'all_url':all_url_dict}]
-    data = {url_clean : d}
-    data_dump = data
+    data_dump = {'url':str(url),'page_title':gettitle(soup),'unix_time':time.time(),'meta_description':getdescription(soup),'meta_keywords':getkeywords(soup),'body':getbodytext(soup),'phone':getphone(html),'email':getemail(html),'all_url':all_url_dict}
     db[collection].insert(data_dump,check_keys=False)
 except ValueError:
     print "Oops!  Dict 1 of functions throw this error..."
@@ -144,9 +144,7 @@ while True:
                 print "Oops!  request loop throw this error..."
                 
             try:
-                d=[{'url':url_new},gettitle(soup),{'unix_time':time.time()},getdescription(soup),getkeywords(soup),getbodytext(soup),getphone(html),getemail(html),{'all_url':all_url_dict}]
-                data = {url_new_clean : d}
-                data_dump = data
+                data_dump = {'url':str(url),'page_title':gettitle(soup),'unix_time':time.time(),'meta_description':getdescription(soup),'meta_keywords':getkeywords(soup),'body':getbodytext(soup),'phone':getphone(html),'email':getemail(html),'all_url':all_url_dict}
             except ValueError:
                 print "Oops!  Dict of functions throw this error..."
             try:

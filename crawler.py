@@ -57,68 +57,57 @@ def geturl(soup):
     urldict[link.text]=url_mended
   return urldict
 
+def storeData(data_dump):
+  try:
+    db[collection].insert(data_dump,check_keys=False)
+  except ValueError:
+    print "Oops!  Dict 1 of functions throw this error..."
+
 '''Start Editing from here'''
-
 start = time.time()
-
 url=list(sys.argv)[1]
-if url.endswith('/'):
-  url = url[:-1]
-url_clean=urlparse.urlparse(url).netloc
-url_callable=urlparse.urlparse(url).scheme+'://'+urlparse.urlparse(url).netloc
+
+###Settings
+exclude_these=('.jpeg','.jpg','.png')##put name of extention here to exclude with prefix '.'
 user_agent = {'User-agent': 'Mozilla/5.0'}
 
-###mongodb credentials put here
-
+##mongodb authentication
 #conn = pymongo.MongoClient('mongodb://username:password@hostname')
 #db=conn.database
+##mongodb authentication
 
-###mongodb credentials put here
+##define 
+unprocessedlist=list()
+processedlist=list()
+count=1
+count2=1
+avg_loop_speed=int()
+##define 
+
+###CRAWLABLE URL   
+if url.endswith('/'):
+  url = url[:-1]
+if urlparse.urlparse(url).scheme=='':
+  url='http://'+url
+###CRAWLABLE URL 
+
+url_clean=urlparse.urlparse(url).netloc
+url_callable=urlparse.urlparse(url).scheme+'://'+urlparse.urlparse(url).netloc
 
 try: 
   collection=list(sys.argv)[2]
 except:
   collection=url_clean
 
-count=1
-print str(count)+' Fetching...'+url
-
 r = requests.get(url, headers = user_agent)
 html=r.text
 soup = BeautifulSoup(html,"lxml")
 
-
 all_url_dict=geturl(soup)
 all_url_list=list(all_url_dict.values())
-unprocessedlist=all_url_list
 
-try:
-    data_dump = {'url':str(url),'page_title':gettitle(soup),'unix_time':time.time(),'meta_description':getdescription(soup),'meta_keywords':getkeywords(soup),'body':getbodytext(soup),'phone':getphone(html),'email':getemail(html),'all_url':all_url_dict}
-    db[collection].insert(data_dump,check_keys=False)
-except ValueError:
-    print "Oops!  Dict 1 of functions throw this error..."
-
-processedlist=[]
-processedlist.append(url)
-
-try:
-  list1=all_url_list
-  unprocessedlist=list(set(list1))
-  unprocessedlist.remove(url)
-except ValueError:
-  print "Oops!  List 1 unprocessed throw this error..."
-
-end = time.time()
-time_taken=end - start
-print('Time Spent: '+str(time_taken))+' Sec'
-print('Average-speed: '+str(count/time_taken)+'  Link/Sec')
-print ''''''
-print ''''''
-count=count+1
-
-count2=1
-avg_loop_speed=int()
-
+unprocessedlist.append(url)
+unprocessedlist=unprocessedlist+all_url_list
 while True:
     if avg_loop_speed>100:
         print 'you are driving very fast!! Slow down buddy'
@@ -127,57 +116,68 @@ while True:
         break
     url_new=unprocessedlist[0]
     url_new_clean=urlparse.urlparse(url_new).netloc
-
+    
     if url_new.endswith('/'):
       url_new = url_new[:-1]
-    
-    if (url_new_clean==url_clean) or (url_new_clean=='www.'+url_clean):##Keeps in the current domain only
-        if url_new not in processedlist:
-            print str(count)+' Fetching...'+url_new
-
-            try:
-                r = requests.get(url_new, headers = user_agent)
-                html=r.text
-                soup = BeautifulSoup(html,"lxml")
-                all_url_dict=geturl(soup)
-            except ValueError:
-                print "Oops!  request loop throw this error..."
-                
-            try:
-                data_dump = {'url':str(url),'page_title':gettitle(soup),'unix_time':time.time(),'meta_description':getdescription(soup),'meta_keywords':getkeywords(soup),'body':getbodytext(soup),'phone':getphone(html),'email':getemail(html),'all_url':all_url_dict}
-            except ValueError:
-                print "Oops!  Dict of functions throw this error..."
-            try:
-              db[collection].insert(data_dump,check_keys=False)
-            except pymongo.errors.DuplicateKeyError, e:
-              print e.error_document
-            all_url_list=list(all_url_dict.values())
-            unprocessedlist = list(set(unprocessedlist + all_url_list))
-            processedlist.append(url_new)
-            try: 
-              unprocessedlist.remove(url_new)
-            except:
-              unprocessedlist.remove(url_new+'/')
-            end = time.time()
-            time_taken=end - start
-            print('Time Spent: '+str(time_taken))+' Sec'
-            print('Average-crawler-speed: '+str(count/time_taken)+'  Link/Sec')
-            print('Average-loop-speed: '+str(count2/time_taken)+'  Link/Sec')
-            print ''''''
-            print ''''''
-            count=count+1
-        else:
-            try: 
-              unprocessedlist.remove(url_new)
-            except:
-              unprocessedlist.remove(url_new+'/')
-              #print url_new+' is not present in this list thrown exception from inner if'
+    if url_new.endswith(exclude_these):
+      print url_new
+      print "Hey this is a file I am skipping it!"
+      try: 
+        unprocessedlist.remove(url_new)
+      except:
+        unprocessedlist.remove(url_new+'/')
+        print url_new+' is not present in this list thrown exception from inner if'
     else:
-        try:
-          unprocessedlist.remove(url_new)
-        except:
-          unprocessedlist.remove(url_new+'/')
-          #print url_new+' is not present in this list thrown exception from outer if'
+      if (url_new_clean==url_clean) or (url_new_clean=='www.'+url_clean):##Keeps in the current domain only
+          if url_new not in processedlist:
+              print str(count)+' Fetching...'+url_new
+  
+              try:
+                  r = requests.get(url_new, headers = user_agent)
+                  html=r.text
+                  soup = BeautifulSoup(html,"lxml")
+                  all_url_dict=geturl(soup)
+              except ValueError:
+                  print "Oops!  request loop throw this error..."
+                  
+              data_dump = {'url':str(url_new),'page_title':gettitle(soup),'unix_time':time.time(),'meta_description':getdescription(soup),'meta_keywords':getkeywords(soup),'body':getbodytext(soup),'phone':getphone(html),'email':getemail(html),'all_url':all_url_dict}
+              
+              try:
+                storeData(data_dump)
+              except ValueError:
+                print "Opps! store funciton error"
+                
+              all_url_list=list(all_url_dict.values())
+              unprocessedlist = list(set(unprocessedlist + all_url_list))
+              processedlist.append(url_new)
+              try: 
+                unprocessedlist.remove(url_new)
+              except:
+                unprocessedlist.remove(url_new+'/')
+              end = time.time()
+              time_taken=end - start
+              print('Time Spent: '+str(time_taken))+' Sec'
+              print('Average-crawler-speed: '+str(count/time_taken)+'  Link/Sec')
+              print('Average-loop-speed: '+str(count2/time_taken)+'  Loop/Sec')
+              print ''''''
+              print ''''''
+              print ''''''
+              count=count+1
+          else:
+              try: 
+                unprocessedlist.remove(url_new)
+              except:
+                unprocessedlist.remove(url_new+'/')
+                print url_new+' is not present in this list thrown exception from inner else'
+      else:
+          try:
+            unprocessedlist.remove(url_new)
+          except:
+            unprocessedlist.remove(url_new+'/')
+            print url_new+' is not present in this list thrown exception from outer else'
+    
+    ##Do not touch 
     end = time.time()
     avg_loop_speed=count2/time_taken
     count2+=1
+    ##Do not touch 
